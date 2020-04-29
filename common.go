@@ -39,6 +39,7 @@ type DistinguishedFolderId struct {
 	// List of values:
 	// https://docs.microsoft.com/en-us/exchange/client-developer/web-service-reference/distinguishedfolderid
 	Id string `xml:"Id,attr"`
+	Mailbox Mailbox `xml:"t:Mailbox,omitempty"`
 }
 
 type Persona struct {
