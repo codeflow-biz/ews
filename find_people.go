@@ -1,103 +1,114 @@
 package ews
 
 import (
-	"encoding/xml"
-	"errors"
+    "encoding/xml"
+    "errors"
 )
 
 type BaseShape string
 
 const (
-	BaseShapeIdOnly        BaseShape = "IdOnly"
-	BaseShapeDefault       BaseShape = "Default"
-	BaseShapeAllProperties BaseShape = "AllProperties"
+    BaseShapeIdOnly        BaseShape = "IdOnly"
+    BaseShapeDefault       BaseShape = "Default"
+    BaseShapeAllProperties BaseShape = "AllProperties"
 )
 
 type BasePoint string
 
 const (
-	BasePointBeginning BasePoint = "Beginning"
-	BasePointEnd       BasePoint = "End"
+    BasePointBeginning BasePoint = "Beginning"
+    BasePointEnd       BasePoint = "End"
 )
 
 type FindPeopleRequest struct {
-	XMLName             struct{}            `xml:"m:FindPeople"`
-	PersonaShape        *PersonaShape       `xml:"m:PersonaShape,omitempty"`
-	IndexedPageItemView IndexedPageItemView `xml:"m:IndexedPageItemView"`
-	ParentFolderId      ParentFolderId      `xml:"m:ParentFolderId"`
-	QueryString         string              `xml:"m:QueryString,omitempty"`
-	// add additional fields
+    XMLName             struct{}            `xml:"m:FindPeople"`
+    PersonaShape        *PersonaShape       `xml:"m:PersonaShape,omitempty"`
+    IndexedPageItemView IndexedPageItemView `xml:"m:IndexedPageItemView"`
+    ParentFolderId      ParentFolderId      `xml:"m:ParentFolderId"`
+    QueryString         string              `xml:"m:QueryString,omitempty"`
+    // add additional fields
 }
 
 type PersonaShape struct {
-	BaseShape            BaseShape            `xml:"t:BaseShape,omitempty"`
-	AdditionalProperties AdditionalProperties `xml:"t:AdditionalProperties,omitempty"`
+    BaseShape            BaseShape            `xml:"t:BaseShape,omitempty"`
+    AdditionalProperties AdditionalProperties `xml:"t:AdditionalProperties,omitempty"`
 }
 
 type AdditionalProperties struct {
-	FieldURI []FieldURI `xml:"t:FieldURI,omitempty"`
-	// add additional fields
+    FieldURI         []FieldURI         `xml:"t:FieldURI,omitempty"`
+    ExtendedFieldURI []ExtendedFieldURI `xml:"t:ExtendedFieldURI,omitempty"`
 }
 
 type FieldURI struct {
-	// List of possible values:
-	// https://docs.microsoft.com/en-us/exchange/client-developer/web-service-reference/fielduri
-	FieldURI string `xml:"FieldURI,attr,omitempty"`
+    // List of possible values:
+    // https://docs.microsoft.com/en-us/exchange/client-developer/web-service-reference/fielduri
+    FieldURI string `xml:"FieldURI,attr,omitempty"`
+}
+
+type ExtendedFieldURI struct {
+    PropertyTag  string `xml:"PropertyTag,attr,omitempty"`
+    PropertyType string `xml:"PropertyType,attr,omitempty"`
 }
 
 type IndexedPageItemView struct {
-	MaxEntriesReturned int       `xml:"MaxEntriesReturned,attr,omitempty"`
-	Offset             int       `xml:"Offset,attr"`
-	BasePoint          BasePoint `xml:"BasePoint,attr"`
+    MaxEntriesReturned int       `xml:"MaxEntriesReturned,attr,omitempty"`
+    Offset             int       `xml:"Offset,attr"`
+    BasePoint          BasePoint `xml:"BasePoint,attr"`
 }
 
 type ParentFolderId struct {
-	DistinguishedFolderId DistinguishedFolderId `xml:"t:DistinguishedFolderId"`
+    FolderId              *FolderId              `xml:"t:FolderId,omitempty"`
+    DistinguishedFolderId *DistinguishedFolderId `xml:"t:DistinguishedFolderId,omitempty"`
+}
+
+type FolderId struct {
+    Id        string   `xml:"Id,attr,omitempty"`
+    ChangeKey string   `xml:"ChangeKey,attr,omitempty"`
 }
 
 type findPeopleResponseEnvelop struct {
-	XMLName struct{}               `xml:"Envelope"`
-	Body    findPeopleResponseBody `xml:"Body"`
+    XMLName struct{}               `xml:"Envelope"`
+    Body    findPeopleResponseBody `xml:"Body"`
 }
 type findPeopleResponseBody struct {
-	FindPeopleResponse FindPeopleResponse `xml:"FindPeopleResponse"`
+    FindPeopleResponse FindPeopleResponse `xml:"FindPeopleResponse"`
 }
 
 type FindPeopleResponse struct {
-	Response
-	People                    People `xml:"People"`
-	TotalNumberOfPeopleInView int    `xml:"TotalNumberOfPeopleInView"`
-	FirstMatchingRowIndex     int    `xml:"FirstMatchingRowIndex"`
-	FirstLoadedRowIndex       int    `xml:"FirstLoadedRowIndex"`
+    Response
+    People                    People `xml:"People"`
+    TotalNumberOfPeopleInView int    `xml:"TotalNumberOfPeopleInView"`
+    FirstMatchingRowIndex     int    `xml:"FirstMatchingRowIndex"`
+    FirstLoadedRowIndex       int    `xml:"FirstLoadedRowIndex"`
 }
 
 type People struct {
-	Persona []Persona `xml:"Persona"`
+    Persona []Persona `xml:"Persona"`
 }
 
 // GetUserAvailability
-//https://docs.microsoft.com/en-us/exchange/client-developer/web-service-reference/findpeople-operation
+// https://docs.microsoft.com/en-us/exchange/client-developer/web-service-reference/findpeople-operation
 func FindPeople(c Client, r *FindPeopleRequest) (*FindPeopleResponse, error) {
 
-	xmlBytes, err := xml.MarshalIndent(r, "", "  ")
-	if err != nil {
-		return nil, err
-	}
+    xmlBytes, err := xml.MarshalIndent(r, "", "  ")
+    if err != nil {
+        return nil, err
+    }
 
-	bb, err := c.SendAndReceive(xmlBytes)
-	if err != nil {
-		return nil, err
-	}
+    bb, err := c.SendAndReceive(xmlBytes)
+    if err != nil {
+        return nil, err
+    }
 
-	var soapResp findPeopleResponseEnvelop
-	err = xml.Unmarshal(bb, &soapResp)
-	if err != nil {
-		return nil, err
-	}
+    var soapResp findPeopleResponseEnvelop
+    err = xml.Unmarshal(bb, &soapResp)
+    if err != nil {
+        return nil, err
+    }
 
-	if soapResp.Body.FindPeopleResponse.ResponseClass == ResponseClassError {
-		return nil, errors.New(soapResp.Body.FindPeopleResponse.MessageText)
-	}
+    if soapResp.Body.FindPeopleResponse.ResponseClass == ResponseClassError {
+        return nil, errors.New(soapResp.Body.FindPeopleResponse.MessageText)
+    }
 
-	return &soapResp.Body.FindPeopleResponse, nil
+    return &soapResp.Body.FindPeopleResponse, nil
 }

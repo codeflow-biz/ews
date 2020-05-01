@@ -13,6 +13,14 @@ const (
 	ResponseClassError   ResponseClass = "Error"
 )
 
+type Traversal string
+
+const (
+    TraversalShallow     Traversal = "Shallow"
+    TraversalSoftDeleted Traversal = "SoftDeleted"
+    TraversalAssociated  Traversal = "Associated"
+)
+
 type Response struct {
 	ResponseClass ResponseClass `xml:"ResponseClass,attr"`
 	MessageText   string        `xml:"MessageText"`
@@ -38,8 +46,8 @@ type MessageXml struct {
 type DistinguishedFolderId struct {
 	// List of values:
 	// https://docs.microsoft.com/en-us/exchange/client-developer/web-service-reference/distinguishedfolderid
-	Id string `xml:"Id,attr"`
-	Mailbox Mailbox `xml:"t:Mailbox,omitempty"`
+	Id string `xml:"Id,attr,omitempty"`
+	Mailbox *Mailbox `xml:"t:Mailbox,omitempty"`
 }
 
 type Persona struct {

@@ -5,14 +5,6 @@ import (
     "errors"
 )
 
-type Traversal string
-
-const (
-    TraversalShallow     Traversal = "Shallow"
-    TraversalSoftDeleted Traversal = "SoftDeleted"
-    TraversalAssociated  Traversal = "Associated"
-)
-
 type FindItemRequest struct {
     XMLName             xml.Name            `xml:"m:FindItem"`
     Traversal           Traversal           `xml:"Traversal,attr,omitempty"`
